@@ -17,7 +17,7 @@ var apiKey = `gpAtMluDyuanOApnQpW1uHGTITnQvgZ3`
 
 // Convert thermostat status to brief status line.
 func briefStatusLine(t Thermostat) string {
-  return fmt.Sprintf("mode: %s, Target: %s°F, Current: %s°F", t.Settings.HvacMode, t.Runtime.DesiredHeat, t.Runtime.ActualTemperature)
+  return fmt.Sprintf("mode: %s, target: %s°F, current: %s°F", t.Settings.HvacMode, t.Runtime.DesiredHeat, t.Runtime.ActualTemperature)
 }
 
 // no thermostats found
@@ -96,176 +96,176 @@ func doMaybeSetTemperature(config *Config, s string) error {
   return doSetTemperature(config, temp)
 }
 
+// command-line application
+var app = &cli.App {
+  Name: "ecobud",
+  Usage: "control ecobee thermostat",
+
+  Commands: []*cli.Command {
+    &cli.Command {
+      Name: "status",
+      Usage: "get thermostat status",
+      Aliases: []string { "st", "stat" },
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return nil
+        }
+
+        // print status
+        return doStatus(config)
+      },
+    },
+
+    &cli.Command {
+      Name: "set",
+      Usage: "Set HVAC mode and (optionally) temperature.",
+      ArgsUsage: "[auto|auxheatonly|cool|heat|off] <temperature>",
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return err
+        }
+
+        // parse hvac mode from args
+        mode, err := ParseHvacMode(cctx.Args().First())
+        if err != nil {
+          return err
+        }
+
+        // set thermostat mode
+        if err = doSetMode(config, mode); err != nil {
+          return err
+        }
+
+        // set temperature (optional)
+        return doMaybeSetTemperature(config, cctx.Args().Get(1))
+      },
+    },
+
+    &cli.Command {
+      Name: "auto",
+      Usage: `Set mode to "auto" and optionally set hold temperature.`,
+      ArgsUsage: "<temperature>",
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return err
+        }
+
+        // set mode
+        if err = doSetMode(config, Auto); err != nil {
+          return err
+        }
+
+        // set temperature (optional)
+        return doMaybeSetTemperature(config, cctx.Args().First())
+      },
+    },
+
+    &cli.Command {
+      Name: "heat",
+      Usage: `Set mode to "heat" and optionally set hold temperature.`,
+      ArgsUsage: "<temperature>",
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return err
+        }
+
+        // set mode
+        if err = doSetMode(config, Heat); err != nil {
+          return err
+        }
+
+        // set temperature (optional)
+        return doMaybeSetTemperature(config, cctx.Args().First())
+      },
+    },
+
+    &cli.Command {
+      Name: "cool",
+      Usage: `Set mode to "cool" and optionally set hold temperature.`,
+      ArgsUsage: "<temperature>",
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return err
+        }
+
+        // set mode
+        if err = doSetMode(config, Cool); err != nil {
+          return err
+        }
+
+        // set temperature (optional)
+        return doMaybeSetTemperature(config, cctx.Args().First())
+      },
+    },
+
+    &cli.Command {
+      Name: "off",
+      Usage: `Set mode to "off" and optionally set hold temperature.`,
+      ArgsUsage: "<temperature>",
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return err
+        }
+
+        // set mode
+        if err = doSetMode(config, Off); err != nil {
+          return err
+        }
+
+        // set temperature (optional)
+        return doMaybeSetTemperature(config, cctx.Args().First())
+      },
+    },
+
+    &cli.Command {
+      Name: "temp",
+      Usage: "set thermostat temperature",
+      Aliases: []string { "t", "temperature" },
+      ArgsUsage: "[temp in degrees fahrenheit]",
+
+      Action: func(cctx *cli.Context) error {
+        // load config
+        config, err := getConfig()
+        if err != nil {
+          return err
+        }
+
+        // parse temperature from args
+        temp, err := ParseTemperature(cctx.Args().First())
+        if err != nil {
+          return err
+        }
+
+        // set temperature
+        return doSetTemperature(config, temp)
+      },
+    },
+  },
+}
+
 func main() {
   // init logger
   logInit()
 
-  // build app
-  app := &cli.App {
-    Name: "ecobud",
-    Usage: "control ecobee thermostat",
-
-    Commands: []*cli.Command {
-      &cli.Command {
-        Name: "status",
-        Usage: "get thermostat status",
-        Aliases: []string { "st", "stat" },
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return nil
-          }
-
-          // print status
-          return doStatus(config)
-        },
-      },
-
-      &cli.Command {
-        Name: "set",
-        Usage: "Set HVAC mode and (optionally) temperature.",
-        ArgsUsage: "[auto|auxheatonly|cool|heat|off] <temperature>",
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return err
-          }
-
-          // parse hvac mode from args
-          mode, err := ParseHvacMode(cctx.Args().First())
-          if err != nil {
-            return err
-          }
-
-          // set thermostat mode
-          if err = doSetMode(config, mode); err != nil {
-            return err
-          }
-
-          // set temperature (optional)
-          return doMaybeSetTemperature(config, cctx.Args().Get(1))
-        },
-      },
-
-      &cli.Command {
-        Name: "auto",
-        Usage: `Set mode to "auto" and optionally set hold temperature.`,
-        ArgsUsage: "<temperature>",
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return err
-          }
-
-          // set mode
-          if err = doSetMode(config, Auto); err != nil {
-            return err
-          }
-
-          // set temperature (optional)
-          return doMaybeSetTemperature(config, cctx.Args().First())
-        },
-      },
-
-      &cli.Command {
-        Name: "heat",
-        Usage: `Set mode to "heat" and optionally set hold temperature.`,
-        ArgsUsage: "<temperature>",
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return err
-          }
-
-          // set mode
-          if err = doSetMode(config, Heat); err != nil {
-            return err
-          }
-
-          // set temperature (optional)
-          return doMaybeSetTemperature(config, cctx.Args().First())
-        },
-      },
-
-      &cli.Command {
-        Name: "cool",
-        Usage: `Set mode to "cool" and optionally set hold temperature.`,
-        ArgsUsage: "<temperature>",
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return err
-          }
-
-          // set mode
-          if err = doSetMode(config, Cool); err != nil {
-            return err
-          }
-
-          // set temperature (optional)
-          return doMaybeSetTemperature(config, cctx.Args().First())
-        },
-      },
-
-      &cli.Command {
-        Name: "off",
-        Usage: `Set mode to "off" and optionally set hold temperature.`,
-        ArgsUsage: "<temperature>",
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return err
-          }
-
-          // set mode
-          if err = doSetMode(config, Off); err != nil {
-            return err
-          }
-
-          // set temperature (optional)
-          return doMaybeSetTemperature(config, cctx.Args().First())
-        },
-      },
-
-      &cli.Command {
-        Name: "temp",
-        Usage: "set thermostat temperature",
-        Aliases: []string { "t", "temperature" },
-        ArgsUsage: "[temp in degrees fahrenheit]",
-
-        Action: func(cctx *cli.Context) error {
-          // load config
-          config, err := getConfig()
-          if err != nil {
-            return err
-          }
-
-          // parse temperature from args
-          temp, err := ParseTemperature(cctx.Args().First())
-          if err != nil {
-            return err
-          }
-
-          // set temperature
-          return doSetTemperature(config, temp)
-        },
-      },
-    },
-  }
-
-  // set default command
+  // get args, set default command
   args := os.Args
   if len(args) < 2 {
     // default to "status" command
